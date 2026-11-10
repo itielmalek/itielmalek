@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Smooth GPS</string>
+    <string name="start">התחל</string>
+    <string name="stop">עצור</string>
+    <string name="dev_settings">הגדרות מפתחים</string>
+    <string name="walk">הליכה</string>
+    <string name="run">ריצה</string>
+    <string name="bike">אופניים</string>
+    <string name="car">רכב</string>
+    <string name="hint_idle">גרור את הסיכה למקום ההתחלה ולחץ התחל</string>
+    <string name="hint_running">גרור את הסיכה – המיקום ילך אליה בהדרגה</string>
+    <string name="err_mock">בחר את Smooth GPS כ"אפליקציית מיקום מדומה" בהגדרות מפתחים</string>
+</resources>
