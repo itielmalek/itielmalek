@@ -177,7 +177,7 @@ class MainActivity : AppCompatActivity() {
         chkSteps = findViewById(R.id.chkSteps)
         val perKm = findViewById<EditText>(R.id.stepsPerKm)
         val prefs = getSharedPreferences("smoothgps", MODE_PRIVATE)
-        MockState.stepsPerKm.value = prefs.getInt("stepsPerKm", 2000)
+        MockState.stepsPerKm.value = prefs.getInt("stepsPerKmV2", 1254)
         perKm.setText(MockState.stepsPerKm.value.toString())
         perKm.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
@@ -185,7 +185,7 @@ class MainActivity : AppCompatActivity() {
             override fun afterTextChanged(s: Editable?) {
                 val v = (s?.toString()?.toIntOrNull() ?: return).coerceIn(100, 5000)
                 MockState.stepsPerKm.value = v
-                prefs.edit().putInt("stepsPerKm", v).apply()
+                prefs.edit().putInt("stepsPerKmV2", v).apply()
             }
         })
         chkSteps.setOnCheckedChangeListener { _, on ->
