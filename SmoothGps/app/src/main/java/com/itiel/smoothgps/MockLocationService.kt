@@ -13,6 +13,7 @@ import android.location.provider.ProviderProperties
 import android.os.IBinder
 import android.os.SystemClock
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -74,28 +75,53 @@ class MockLocationService : Service() {
         var speedNoise = 0.0
         var bearing = 0f
         val dt = 1.0 // שניות בין עדכונים
+        val queue = ArrayDeque<LatLng>()
+        var seenPath = MockState.path.value.id
+        queue.addAll(MockState.path.value.points)
         var lastTick = SystemClock.elapsedRealtime()
 
         while (currentCoroutineContext().isActive) {
-            val target = MockState.target.value ?: pos
-            val dist = distance(pos, target)
-            val maxSpeed = MockState.speedKmh.value / 3.6 // מ'/ש'
+            // קפיצה מיידית (כפתור "קפוץ לכאן")
+            MockState.teleportTo.getAndUpdate { null }?.let { pos = it; queue.clear() }
 
-            // רעש איטי במהירות (±7%) כדי שלא יהיה רובוטי
-            speedNoise = (speedNoise * 0.85 + Random.nextDouble(-0.07, 0.07)).coerceIn(-0.07, 0.07)
-            var v = maxSpeed * (1 + speedNoise)
+            // מסלול חדש מה-Activity
+            val cmd = MockState.path.value
+            if (cmd.id != seenPath) {
+                seenPath = cmd.id
+                queue.clear()
+                queue.addAll(cmd.points)
+            }
 
-            // האטה רכה בקרבת היעד
-            val brakeDist = v * 2.0
-            if (dist < brakeDist) v *= (dist / brakeDist).coerceIn(0.15, 1.0)
+            var v = 0.0
+            if (!MockState.locked.value && queue.isNotEmpty()) {
+                val maxSpeed = MockState.speedKmh.value / 3.6 // מ'/ש'
+                // רעש איטי במהירות (±7%) כדי שלא יהיה רובוטי
+                speedNoise = (speedNoise * 0.85 + Random.nextDouble(-0.07, 0.07)).coerceIn(-0.07, 0.07)
+                v = maxSpeed * (1 + speedNoise)
 
-            val moving = dist > 0.5
-            val step = if (moving) min(dist, v * dt) else 0.0
-            if (moving) {
-                bearing = bearing(pos, target)
-                pos = destination(pos, bearing.toDouble(), step)
-            } else {
-                v = 0.0
+                // האטה רכה בקרבת היעד הסופי
+                if (queue.size == 1) {
+                    val brakeDist = v * 2.0
+                    val d = distance(pos, queue.first())
+                    if (d < brakeDist) v *= (d / brakeDist).coerceIn(0.15, 1.0)
+                }
+
+                // מתקדמים לאורך הנקודות; מה שנשאר מהצעד עובר לנקודה הבאה
+                var remaining = v * dt
+                while (remaining > 0 && queue.isNotEmpty()) {
+                    val g = queue.first()
+                    val d = distance(pos, g)
+                    if (d <= remaining) {
+                        if (d > 0.05) bearing = bearing(pos, g)
+                        pos = g
+                        remaining -= d
+                        queue.removeFirst()
+                    } else {
+                        bearing = bearing(pos, g)
+                        pos = destination(pos, bearing.toDouble(), remaining)
+                        remaining = 0.0
+                    }
+                }
             }
             MockState.current.value = pos
             push(pos, v.toFloat(), bearing)
@@ -136,6 +162,8 @@ class MockLocationService : Service() {
             try { lm.setTestProviderEnabled(p, false); lm.removeTestProvider(p) } catch (_: Exception) {}
         }
         MockState.running.value = false
+        MockState.locked.value = false
+        MockState.setPath(emptyList())
         super.onDestroy()
     }
 

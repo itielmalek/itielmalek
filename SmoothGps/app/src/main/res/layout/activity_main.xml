@@ -32,6 +32,12 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/search" />
+
+        <Button
+            android:id="@+id/btnFav"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/favorites" />
     </LinearLayout>
 
     <LinearLayout
@@ -81,6 +87,27 @@
                 android:layout_weight="1" android:text="@string/car" />
         </LinearLayout>
 
+        <CheckBox
+            android:id="@+id/chkRoute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="@string/use_roads"
+            android:textColor="#000000" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button android:id="@+id/btnJump" style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/jump" />
+            <Button android:id="@+id/btnLock" style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:text="@string/lock" />
+        </LinearLayout>
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -93,5 +120,13 @@
                 android:layout_width="0dp" android:layout_height="wrap_content"
                 android:layout_weight="1" android:text="@string/dev_settings" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvVersion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="#777777"
+            android:textSize="11sp" />
     </LinearLayout>
 </FrameLayout>

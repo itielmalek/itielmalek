@@ -20,4 +20,20 @@
     <string name="search_hint">חפש מקום: נתניה, פריז…</string>
     <string name="search">חפש</string>
     <string name="not_found">לא נמצא מקום כזה</string>
+    <string name="jump">קפוץ לכאן</string>
+    <string name="lock">מיקום קבוע</string>
+    <string name="unlock">שחרר מיקום</string>
+    <string name="use_roads">ללכת בדרכים ושבילים (ולא בקו אווירי)</string>
+    <string name="favorites">★</string>
+    <string name="fav_title">מועדפים</string>
+    <string name="fav_empty">אין מועדפים עדיין. הצב את הסיכה ולחץ "שמור".</string>
+    <string name="fav_save">שמור את הסיכה</string>
+    <string name="fav_name_hint">שם למקום</string>
+    <string name="fav_delete">למחוק את \"%s\"?</string>
+    <string name="ok">אישור</string>
+    <string name="cancel">ביטול</string>
+    <string name="delete">מחק</string>
+    <string name="route_failed">לא נמצא מסלול בדרכים – הולך בקו ישר</string>
+    <string name="locked_msg">המיקום נעול. לחץ "שחרר מיקום" כדי לזוז</string>
+    <string name="map_error">⚠ המפה לא נטענת – בדוק חיבור אינטרנט</string>
 </resources>
