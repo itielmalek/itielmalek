@@ -14,7 +14,10 @@
     <string name="run">ריצה</string>
     <string name="bike">אופניים</string>
     <string name="car">רכב</string>
-    <string name="hint_idle">גרור את הסיכה למקום ההתחלה ולחץ התחל</string>
-    <string name="hint_running">גרור את הסיכה – המיקום ילך אליה בהדרגה</string>
+    <string name="hint_idle">לחץ על המפה (או לחיצה ארוכה על הסיכה וגרירה) למקום ההתחלה, ואז התחל</string>
+    <string name="hint_running">גרור את הסיכה (לחיצה ארוכה עליה) או לחץ על המפה – המיקום ילך אליה בהדרגה</string>
     <string name="err_mock">בחר את Smooth GPS כ"אפליקציית מיקום מדומה" בהגדרות מפתחים</string>
+    <string name="search_hint">חפש מקום: נתניה, פריז…</string>
+    <string name="search">חפש</string>
+    <string name="not_found">לא נמצא מקום כזה</string>
 </resources>

@@ -1,7 +1,8 @@
 package com.itiel.smoothgps
 
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.flow.MutableStateFlow
+
+data class LatLng(val latitude: Double, val longitude: Double)
 
 /** מצב משותף בין ה-Activity לשירות. */
 object MockState {

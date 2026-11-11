@@ -12,7 +12,6 @@ import android.location.LocationManager
 import android.location.provider.ProviderProperties
 import android.os.IBinder
 import android.os.SystemClock
-import com.google.android.gms.maps.model.LatLng
 import kotlinx.coroutines.*
 import kotlin.math.*
 import kotlin.random.Random
