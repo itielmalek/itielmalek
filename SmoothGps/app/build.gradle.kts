@@ -11,8 +11,8 @@ android {
         applicationId = "com.itiel.smoothgps"
         minSdk = 26
         targetSdk = 34
-        versionCode = 6
-        versionName = "1.5"
+        versionCode = 7
+        versionName = "1.6"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -27,4 +27,5 @@ dependencies {
     implementation("org.osmdroid:osmdroid-android:6.1.18")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha07")
 }

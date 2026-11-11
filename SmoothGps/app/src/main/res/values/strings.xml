@@ -36,4 +36,8 @@
     <string name="route_failed">לא נמצא מסלול בדרכים – הולך בקו ישר</string>
     <string name="locked_msg">המיקום נעול. לחץ "שחרר מיקום" כדי לזוז</string>
     <string name="map_error">⚠ המפה לא נטענת – בדוק חיבור אינטרנט</string>
+    <string name="steps_label">דמה צעדים</string>
+    <string name="steps_per_km">צעדים לק״מ:</string>
+    <string name="hc_missing">Health Connect לא מותקן – פותח את חנות האפליקציות</string>
+    <string name="hc_denied">לא ניתנה הרשאת צעדים ב-Health Connect</string>
 </resources>

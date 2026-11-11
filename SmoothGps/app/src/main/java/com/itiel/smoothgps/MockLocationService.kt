@@ -14,6 +14,12 @@ import android.os.IBinder
 import android.os.SystemClock
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.getAndUpdate
+import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.metadata.Metadata
+import java.time.Instant
+import java.time.ZoneId
 import kotlin.math.*
 import kotlin.random.Random
 
@@ -85,6 +91,9 @@ class MockLocationService : Service() {
         var seenPath = MockState.path.value.id
         queue.addAll(MockState.path.value.points)
         var lastTick = SystemClock.elapsedRealtime()
+        var stepAcc = 0.0
+        var stepStart = System.currentTimeMillis()
+        var lastFlush = stepStart
 
         while (currentCoroutineContext().isActive) {
             // קפיצה מיידית (כפתור "קפוץ לכאן")
@@ -99,6 +108,7 @@ class MockLocationService : Service() {
             }
 
             var v = 0.0
+            var moved = 0.0
             if (!MockState.locked.value && queue.isNotEmpty()) {
                 val maxSpeed = MockState.speedKmh.value / 3.6 // מ'/ש'
                 // רעש איטי במהירות (±7%) כדי שלא יהיה רובוטי
@@ -120,17 +130,39 @@ class MockLocationService : Service() {
                     if (d <= remaining) {
                         if (d > 0.05) bearing = bearing(pos, g)
                         pos = g
+                        moved += d
                         remaining -= d
                         queue.removeFirst()
                     } else {
                         bearing = bearing(pos, g)
                         pos = destination(pos, bearing.toDouble(), remaining)
+                        moved += remaining
                         remaining = 0.0
                     }
                 }
             }
             MockState.current.value = pos
             push(pos, v.toFloat(), bearing)
+
+            // דימוי צעדים: מצטברים לפי המרחק שנעשה, ונכתבים ל-Health Connect כל ~20 שניות
+            if (MockState.stepsEnabled.value && moved > 0) {
+                stepAcc += moved / 1000.0 * MockState.stepsPerKm.value
+            }
+            val nowMs = System.currentTimeMillis()
+            if (nowMs - lastFlush >= 20_000) {
+                lastFlush = nowMs
+                val n = stepAcc.toLong()
+                if (n > 0 && MockState.stepsEnabled.value) {
+                    stepAcc -= n
+                    val start = Instant.ofEpochMilli(stepStart)
+                    val end = Instant.ofEpochMilli(max(nowMs, stepStart + 1000))
+                    stepStart = nowMs
+                    stepScope.launch { writeSteps(applicationContext, n, start, end) }
+                } else if (stepAcc <= 0.0 || !MockState.stepsEnabled.value) {
+                    stepAcc = 0.0
+                    stepStart = nowMs
+                }
+            }
 
             val now = SystemClock.elapsedRealtime()
             delay(max(0L, (dt * 1000).toLong() - (now - lastTick)))
@@ -187,6 +219,34 @@ class MockLocationService : Service() {
     }
 
     companion object {
+        private val stepScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+        private suspend fun writeSteps(ctx: Context, n: Long, start: Instant, end: Instant) {
+            try {
+                if (HealthConnectClient.getSdkStatus(ctx) != HealthConnectClient.SDK_AVAILABLE) {
+                    MockState.error.value = "Health Connect לא זמין במכשיר"
+                    return
+                }
+                val client = HealthConnectClient.getOrCreate(ctx)
+                val perm = HealthPermission.getWritePermission(StepsRecord::class)
+                if (perm !in client.permissionController.getGrantedPermissions()) {
+                    MockState.error.value = "אין הרשאת צעדים ב-Health Connect – כבה והדלק את \"דמה צעדים\""
+                    return
+                }
+                val rules = ZoneId.systemDefault().rules
+                client.insertRecords(listOf(
+                    StepsRecord(
+                        count = n,
+                        startTime = start, startZoneOffset = rules.getOffset(start),
+                        endTime = end, endZoneOffset = rules.getOffset(end),
+                        metadata = Metadata.EMPTY
+                    )
+                ))
+            } catch (e: Exception) {
+                MockState.error.value = "שגיאה בכתיבת צעדים: ${e.message}"
+            }
+        }
+
         const val ACTION_STOP = "com.itiel.smoothgps.STOP"
         private const val CHANNEL = "smooth_gps"
         private const val R_EARTH = 6371000.0

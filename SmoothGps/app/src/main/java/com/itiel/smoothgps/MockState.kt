@@ -19,6 +19,9 @@ object MockState {
     val locked = MutableStateFlow(false)
     /** קפיצה מיידית למיקום (נצרך פעם אחת ע"י השירות). */
     val teleportTo = MutableStateFlow<LatLng?>(null)
+    /** דימוי צעדים (נכתבים ל-Health Connect) ומספר הצעדים לכל ק"מ. */
+    val stepsEnabled = MutableStateFlow(false)
+    val stepsPerKm = MutableStateFlow(2000)
     val speedKmh = MutableStateFlow(5f)
     val running = MutableStateFlow(false)
     val error = MutableStateFlow<String?>(null)

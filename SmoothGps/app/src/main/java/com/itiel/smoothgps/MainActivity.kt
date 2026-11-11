@@ -16,6 +16,13 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Process
 import android.provider.Settings
+import android.net.Uri
+import android.text.Editable
+import android.text.TextWatcher
+import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.StepsRecord
 import android.view.animation.LinearInterpolator
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -68,6 +75,32 @@ class MainActivity : AppCompatActivity() {
     private var tilesOk = 0
     private var tilesFail = 0
     private var pendingAction: (() -> Unit)? = null
+    private lateinit var chkSteps: CheckBox
+
+    private val stepsPerm = HealthPermission.getWritePermission(StepsRecord::class)
+
+    private val healthLauncher = registerForActivityResult(PermissionController.createRequestPermissionResultContract()) { granted ->
+        if (stepsPerm !in granted) {
+            Toast.makeText(this, R.string.hc_denied, Toast.LENGTH_LONG).show()
+            chkSteps.isChecked = false
+        }
+    }
+
+    /** בקשת הרשאת צעדים מ-Health Connect (מתקין/מפנה לחנות אם חסר). */
+    private fun ensureHealthPermission() {
+        if (HealthConnectClient.getSdkStatus(this) != HealthConnectClient.SDK_AVAILABLE) {
+            Toast.makeText(this, R.string.hc_missing, Toast.LENGTH_LONG).show()
+            chkSteps.isChecked = false
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.healthdata")))
+            } catch (_: Exception) {}
+            return
+        }
+        lifecycleScope.launch {
+            val granted = HealthConnectClient.getOrCreate(this@MainActivity).permissionController.getGrantedPermissions()
+            if (stepsPerm !in granted) healthLauncher.launch(setOf(stepsPerm))
+        }
+    }
 
     private val permLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
         val action = pendingAction
@@ -139,6 +172,26 @@ class MainActivity : AppCompatActivity() {
         searchBox = findViewById(R.id.searchBox)
         chkRoute = findViewById(R.id.chkRoute)
         val bar = findViewById<SeekBar>(R.id.speedBar)
+
+        // דימוי צעדים
+        chkSteps = findViewById(R.id.chkSteps)
+        val perKm = findViewById<EditText>(R.id.stepsPerKm)
+        val prefs = getSharedPreferences("smoothgps", MODE_PRIVATE)
+        MockState.stepsPerKm.value = prefs.getInt("stepsPerKm", 2000)
+        perKm.setText(MockState.stepsPerKm.value.toString())
+        perKm.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val v = (s?.toString()?.toIntOrNull() ?: return).coerceIn(100, 5000)
+                MockState.stepsPerKm.value = v
+                prefs.edit().putInt("stepsPerKm", v).apply()
+            }
+        })
+        chkSteps.setOnCheckedChangeListener { _, on ->
+            MockState.stepsEnabled.value = on
+            if (on) ensureHealthPermission()
+        }
         findViewById<TextView>(R.id.tvVersion).text = "Smooth GPS v" + try {
             packageManager.getPackageInfo(packageName, 0).versionName
         } catch (_: Exception) { "?" }
