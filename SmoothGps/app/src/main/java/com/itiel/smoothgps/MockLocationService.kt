@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.getAndUpdate
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.metadata.Device
 import androidx.health.connect.client.records.metadata.Metadata
 import java.time.Instant
 import java.time.ZoneId
@@ -239,7 +240,15 @@ class MockLocationService : Service() {
                         count = n,
                         startTime = start, startZoneOffset = rules.getOffset(start),
                         endTime = end, endZoneOffset = rules.getOffset(end),
-                        metadata = Metadata()
+                        // נרשם כצעדים שנמדדו אוטומטית בטלפון (כמו חיישן הצעדים), ולא כהזנה ידנית
+                        metadata = Metadata(
+                            recordingMethod = Metadata.RECORDING_METHOD_AUTOMATICALLY_RECORDED,
+                            device = Device(
+                                manufacturer = android.os.Build.MANUFACTURER,
+                                model = android.os.Build.MODEL,
+                                type = Device.TYPE_PHONE
+                            )
+                        )
                     )
                 ))
             } catch (e: Exception) {

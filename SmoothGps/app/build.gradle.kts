@@ -11,8 +11,8 @@ android {
         applicationId = "com.itiel.smoothgps"
         minSdk = 26
         targetSdk = 34
-        versionCode = 7
-        versionName = "1.6"
+        versionCode = 8
+        versionName = "1.7"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
