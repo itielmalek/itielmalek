@@ -1,0 +1,20 @@
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Arial,sans-serif;background:#f1f5f9;color:#0f172a;padding-bottom:70px}
+header{background:#2563eb;color:#fff;padding:14px 16px;position:sticky;top:0;z-index:2}
+header h1{margin:0;font-size:20px}#status{font-size:12px;opacity:.9;margin-top:2px}
+main{max-width:640px;margin:0 auto;padding:12px}
+.card,.pkg{background:#fff;border-radius:12px;padding:14px;margin-bottom:12px;box-shadow:0 1px 3px #0001}
+.card h2{margin:0 0 10px;font-size:17px}
+input,select,textarea{width:100%;padding:10px;margin:4px 0 8px;border:1px solid #cbd5e1;border-radius:8px;font:inherit}
+input[type=range]{padding:0}
+label{display:block;font-size:14px;margin-bottom:6px}
+button{background:#2563eb;color:#fff;border:0;border-radius:8px;padding:10px 14px;font:inherit;cursor:pointer;margin:2px}
+button.secondary{background:#e2e8f0;color:#0f172a}button.danger{background:#dc2626}button.ok{background:#16a34a}
+.pkg{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.pkg .t{font-weight:600}.muted{color:#64748b;font-size:13px}.err{color:#dc2626;font-size:12px}
+.pkg.arrived{border-right:5px solid #16a34a}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid #e2e8f0}
+nav button{flex:1;background:none;color:#475569;border-radius:0;padding:14px 4px;margin:0}
+nav button.active{color:#2563eb;font-weight:700;border-top:3px solid #2563eb}
+.badge:not(:empty){background:#dc2626;color:#fff;border-radius:10px;padding:0 6px;font-size:11px;margin-right:4px}
+.row{margin-bottom:10px}[hidden]{display:none!important}

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg">
+<title>מעקב חבילות</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header><h1>📦 מעקב חבילות</h1><div id="status"></div></header>
+<main>
+  <section id="tab-tracking" class="tab">
+    <form id="addForm" class="card">
+      <h2>הוספת חבילה</h2>
+      <input name="phone" placeholder="מספר טלפון" inputmode="tel" required>
+      <input name="tracking" placeholder="מספר מעקב" required>
+      <input name="name" placeholder="שם / תיאור (לא חובה)">
+      <button>הוסף</button>
+      <details><summary>הוספה מרוכזת</summary>
+        <textarea name="bulk" rows="4" placeholder="שורה לכל חבילה:&#10;0501234567 RR123456789IL שעון"></textarea>
+        <button type="button" id="bulkBtn">הוסף הכל</button>
+      </details>
+    </form>
+    <div class="row"><button id="scanBtn">🔄 סרוק עכשיו</button></div>
+    <div id="trackingList"></div>
+  </section>
+  <section id="tab-arrived" class="tab" hidden><div id="arrivedList"></div></section>
+  <section id="tab-collected" class="tab" hidden><div id="collectedList"></div></section>
+  <section id="tab-settings" class="tab" hidden>
+    <form id="settingsForm" class="card">
+      <h2>הגדרות</h2>
+      <label>תדירות סריקה: <b id="ivLabel"></b> שעות
+        <input type="range" name="intervalHours" min="6" max="12" step="1"></label>
+      <label>קישור מעקב (השתמש ב-<code>{tracking}</code> וב-<code>{phone}</code>)
+        <input name="urlTemplate" dir="ltr" placeholder="https://example.com/track?id={tracking}&phone={phone}"></label>
+      <label>שיטה <select name="method"><option>GET</option><option>POST</option></select></label>
+      <label id="bodyLbl">גוף הבקשה (POST)<input name="body" dir="ltr" placeholder="tracking={tracking}&phone={phone}"></label>
+      <label>מילות זיהוי להגעה (אחת בכל שורה)
+        <textarea name="keywords" rows="5"></textarea></label>
+      <button>שמור</button>
+    </form>
+    <div class="card"><h2>התראות</h2>
+      <button id="pushBtn">הפעל התראות במכשיר זה</button>
+      <button id="testPushBtn" class="secondary">שלח התראת בדיקה</button>
+      <p id="pushMsg" class="muted"></p></div>
+  </section>
+</main>
+<nav>
+  <button data-tab="tracking" class="active">במעקב<span id="b-tracking"></span></button>
+  <button data-tab="arrived">הגיעו<span id="b-arrived" class="badge"></span></button>
+  <button data-tab="collected">נאספו</button>
+  <button data-tab="settings">הגדרות</button>
+</nav>
+<script src="/app.js"></script>
+</body></html>

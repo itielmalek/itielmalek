@@ -1,0 +1,9 @@
+{
+  "name": "package-tracker",
+  "version": "1.0.0",
+  "description": "אפליקציה לבדיקה אוטומטית של הגעת חבילות",
+  "main": "server.js",
+  "scripts": { "start": "node server.js", "test": "node test.js" },
+  "engines": { "node": ">=20" },
+  "dependencies": { "web-push": "^3.6.7" }
+}
