@@ -35,7 +35,13 @@ class MockLocationService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        startForeground(1, buildNotification())
+        try {
+            startForeground(1, buildNotification())
+        } catch (e: Exception) {
+            MockState.error.value = "לא ניתן להפעיל שירות רקע: ${e.message}"
+            stopSelf()
+            return START_NOT_STICKY
+        }
         lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         if (!setupProviders()) {
             MockState.error.value = getString(R.string.err_mock)

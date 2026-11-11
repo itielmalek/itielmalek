@@ -4,6 +4,9 @@ import android.Manifest
 import android.animation.ValueAnimator
 import android.app.AlertDialog
 import android.app.AppOpsManager
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.pm.PackageManager
 import android.content.Intent
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
@@ -22,8 +25,8 @@ import android.widget.EditText
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -64,9 +67,63 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chkRoute: CheckBox
     private var tilesOk = 0
     private var tilesFail = 0
+    private var pendingAction: (() -> Unit)? = null
+
+    private val permLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        val action = pendingAction
+        pendingAction = null
+        if (action != null) {
+            if (hasLocationPerm()) action()
+            else Toast.makeText(this, "נדרשת הרשאת מיקום כדי להפעיל את האפליקציה", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun hasLocationPerm() =
+        ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+
+    /** מוודא הגדרת מיקום מדומה + הרשאות (חובה באנדרואיד 14 לשירות מיקום), ואז מריץ את הפעולה. */
+    private fun withReady(action: () -> Unit) {
+        if (!isMockAppEnabled()) { showSetupDialog(); return }
+        if (hasLocationPerm()) { action(); return }
+        pendingAction = action
+        permLauncher.launch(requiredPermissions())
+    }
+
+    private fun requiredPermissions(): Array<String> {
+        val perms = mutableListOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
+        if (Build.VERSION.SDK_INT >= 33) perms += Manifest.permission.POST_NOTIFICATIONS
+        return perms.toTypedArray()
+    }
+
+    /** אם האפליקציה קרסה – שומרים את השגיאה ומציגים אותה בפתיחה הבאה. */
+    private fun installCrashReporter() {
+        val prefs = getSharedPreferences("crash", MODE_PRIVATE)
+        val prev = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            try { prefs.edit().putString("last", android.util.Log.getStackTraceString(e)).commit() } catch (_: Exception) {}
+            prev?.uncaughtException(t, e)
+        }
+    }
+
+    private fun showLastCrash() {
+        val prefs = getSharedPreferences("crash", MODE_PRIVATE)
+        val crash = prefs.getString("last", null) ?: return
+        prefs.edit().remove("last").apply()
+        AlertDialog.Builder(this)
+            .setTitle("האפליקציה קרסה בפעם הקודמת")
+            .setMessage(crash.take(1800))
+            .setPositiveButton("העתק") { _, _ ->
+                (getSystemService(CLIPBOARD_SERVICE) as ClipboardManager)
+                    .setPrimaryClip(ClipData.newPlainText("crash", crash))
+                Toast.makeText(this, "הועתק – אפשר להדביק ולשלוח לי", Toast.LENGTH_LONG).show()
+            }
+            .setNegativeButton(R.string.close, null)
+            .show()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        installCrashReporter()
         val osm = Configuration.getInstance()
         osm.load(applicationContext, getSharedPreferences("osmdroid", MODE_PRIVATE))
         osm.userAgentValue = "SmoothGps/1.4 ($packageName)"
@@ -114,9 +171,8 @@ class MainActivity : AppCompatActivity() {
 
         setupMap()
 
-        if (Build.VERSION.SDK_INT >= 33) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
-        }
+        showLastCrash()
+        if (!hasLocationPerm()) permLauncher.launch(requiredPermissions())
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -323,8 +379,7 @@ class MainActivity : AppCompatActivity() {
     // ───────────────────────── קפיצה / נעילה / התחלה ─────────────────────────
 
     /** קפיצה מיידית לסיכה (בלי הליכה). אם השירות לא רץ – מפעיל אותו שם. */
-    private fun jumpHere() {
-        if (!ensureMockReady()) return
+    private fun jumpHere() = withReady {
         val p = pin.position.toLL()
         routeLine.setPoints(emptyList())
         if (MockState.running.value) {
@@ -339,7 +394,10 @@ class MainActivity : AppCompatActivity() {
     /** מיקום קבוע: קופץ לסיכה ונשאר שם. לחיצה נוספת משחררת. */
     private fun toggleLock() {
         if (MockState.locked.value) { MockState.locked.value = false; return }
-        if (!ensureMockReady()) return
+        withReady { lockHere() }
+    }
+
+    private fun lockHere() {
         MockState.locked.value = true
         routeLine.setPoints(emptyList())
         if (MockState.running.value) {
@@ -358,21 +416,16 @@ class MainActivity : AppCompatActivity() {
             map.invalidate()
             return
         }
-        if (!ensureMockReady()) return
-        MockState.locked.value = false
-        startService()
+        withReady {
+            MockState.locked.value = false
+            startService()
+        }
     }
 
     private fun startService() {
         MockState.target.value = pin.position.toLL()
         MockState.setPath(emptyList())
         ContextCompat.startForegroundService(this, Intent(this, MockLocationService::class.java))
-    }
-
-    private fun ensureMockReady(): Boolean {
-        if (isMockAppEnabled()) return true
-        showSetupDialog()
-        return false
     }
 
     // ───────────────────────── הגדרת מיקום מדומה ─────────────────────────
