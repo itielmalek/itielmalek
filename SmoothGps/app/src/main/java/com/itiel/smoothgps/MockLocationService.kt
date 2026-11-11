@@ -239,7 +239,7 @@ class MockLocationService : Service() {
                         count = n,
                         startTime = start, startZoneOffset = rules.getOffset(start),
                         endTime = end, endZoneOffset = rules.getOffset(end),
-                        metadata = Metadata.EMPTY
+                        metadata = Metadata()
                     )
                 ))
             } catch (e: Exception) {
