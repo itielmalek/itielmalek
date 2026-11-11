@@ -18,8 +18,8 @@ android {
         applicationId = "com.itiel.smoothgps"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1"
         manifestPlaceholders["MAPS_API_KEY"] =
             localProps.getProperty("MAPS_API_KEY") ?: System.getenv("MAPS_API_KEY") ?: ""
     }

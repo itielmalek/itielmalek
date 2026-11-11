@@ -2,7 +2,14 @@
     <string name="app_name">Smooth GPS</string>
     <string name="start">התחל</string>
     <string name="stop">עצור</string>
-    <string name="dev_settings">הגדרות מפתחים</string>
+    <string name="dev_settings">הגדרת מיקום מדומה</string>
+    <string name="setup_title">הגדרה חד-פעמית</string>
+    <string name="setup_steps">1. ודא שאפשרויות מפתחים פעילות (הגדרות ← אודות הטלפון ← לחץ 7 פעמים על "מספר בניה").\n\n2. לחץ "פתח הגדרות מפתחים".\n\n3. מצא "בחר אפליקציית מיקום מדומה" (Select mock location app).\n\n4. בחר "Smooth GPS" ואשר.\n\n5. חזור לכאן ולחץ התחל.</string>
+    <string name="open_dev">פתח הגדרות מפתחים</string>
+    <string name="open_about">פתח "אודות הטלפון"</string>
+    <string name="close">סגור</string>
+    <string name="mock_ok">✔ האפליקציה מוגדרת כמיקום מדומה</string>
+    <string name="mock_missing">✘ עוד לא הוגדרה כמיקום מדומה – לחץ על "הגדרת מיקום מדומה"</string>
     <string name="walk">הליכה</string>
     <string name="run">ריצה</string>
     <string name="bike">אופניים</string>

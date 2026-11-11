@@ -1,6 +1,9 @@
 package com.itiel.smoothgps
 
 import android.Manifest
+import android.app.AppOpsManager
+import android.app.AlertDialog
+import android.os.Process
 import android.animation.ValueAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -62,10 +65,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         findViewById<Button>(R.id.btnRun).setOnClickListener { setSpeed(10) }
         findViewById<Button>(R.id.btnBike).setOnClickListener { setSpeed(20) }
         findViewById<Button>(R.id.btnCar).setOnClickListener { setSpeed(50) }
-        findViewById<Button>(R.id.btnDev).setOnClickListener {
-            try { startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)) }
-            catch (_: Exception) { startActivity(Intent(Settings.ACTION_SETTINGS)) }
-        }
+        findViewById<Button>(R.id.btnDev).setOnClickListener { showSetupDialog() }
         startBtn.setOnClickListener { toggle() }
 
         (supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment).getMapAsync(this)
@@ -114,7 +114,43 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         m.setOnMapClickListener { p -> pin?.position = p; MockState.target.value = p }
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (!MockState.running.value) {
+            status.setText(if (isMockAppEnabled()) R.string.mock_ok else R.string.mock_missing)
+        }
+    }
+
+    private fun isMockAppEnabled(): Boolean = try {
+        val ops = getSystemService(APP_OPS_SERVICE) as AppOpsManager
+        @Suppress("DEPRECATION")
+        ops.checkOp("android:mock_location", Process.myUid(), packageName) == AppOpsManager.MODE_ALLOWED
+    } catch (_: Exception) { false }
+
+    private fun devOptionsOn(): Boolean =
+        Settings.Global.getInt(contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
+
+    /** מדריך + מעבר ישיר להגדרות המפתחים (או ל"אודות הטלפון" אם הן עוד לא פעילות). */
+    private fun showSetupDialog() {
+        val devOn = devOptionsOn()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.setup_title)
+            .setMessage(getString(R.string.setup_steps))
+            .setPositiveButton(if (devOn) R.string.open_dev else R.string.open_about) { _, _ ->
+                val action = if (devOn) Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS
+                             else Settings.ACTION_DEVICE_INFO_SETTINGS
+                try { startActivity(Intent(action)) }
+                catch (_: Exception) { startActivity(Intent(Settings.ACTION_SETTINGS)) }
+            }
+            .setNegativeButton(R.string.close, null)
+            .show()
+    }
+
     private fun toggle() {
+        if (!MockState.running.value && !isMockAppEnabled()) {
+            showSetupDialog()
+            return
+        }
         if (MockState.running.value) {
             startService(Intent(this, MockLocationService::class.java).setAction(MockLocationService.ACTION_STOP))
         } else {
