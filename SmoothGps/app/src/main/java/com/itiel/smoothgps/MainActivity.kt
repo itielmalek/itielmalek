@@ -511,7 +511,7 @@ class MainActivity : AppCompatActivity() {
                     if (Build.VERSION.SDK_INT >= 30) {
                         val cs = CancellationSignal()
                         cont.invokeOnCancellation { cs.cancel() }
-                        lm.getCurrentLocation(prov, cs, ContextCompat.getMainExecutor(this)) { l ->
+                        lm.getCurrentLocation(prov, cs, ContextCompat.getMainExecutor(this@MainActivity)) { l ->
                             if (cont.isActive) cont.resume(l)
                         }
                     } else {
