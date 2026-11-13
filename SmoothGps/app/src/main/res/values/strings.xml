@@ -40,4 +40,7 @@
     <string name="steps_per_km">צעדים לק״מ:</string>
     <string name="hc_missing">Health Connect לא מותקן – פותח את חנות האפליקציות</string>
     <string name="hc_denied">לא ניתנה הרשאת צעדים ב-Health Connect</string>
+    <string name="real_loc">מיקום אמיתי</string>
+    <string name="real_loc_wait">עוצר דימוי ומאתר את המיקום האמיתי שלך…</string>
+    <string name="real_loc_fail">לא הצלחתי לקבל מיקום אמיתי – ודא שה-GPS דולק ונסה שוב</string>
 </resources>

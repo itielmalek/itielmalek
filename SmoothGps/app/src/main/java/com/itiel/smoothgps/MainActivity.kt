@@ -1,6 +1,16 @@
 package com.itiel.smoothgps
 
 import android.Manifest
+import android.annotation.SuppressLint
+import android.content.Context
+import android.location.Location
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.CancellationSignal
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.resume
 import android.animation.ValueAnimator
 import android.app.AlertDialog
 import android.app.AppOpsManager
@@ -215,6 +225,7 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnDev).setOnClickListener { showSetupDialog() }
         findViewById<Button>(R.id.btnFav).setOnClickListener { showFavorites() }
         findViewById<Button>(R.id.btnJump).setOnClickListener { jumpHere() }
+        findViewById<Button>(R.id.btnReal).setOnClickListener { resetToRealLocation() }
         lockBtn.setOnClickListener { toggleLock() }
         startBtn.setOnClickListener { toggle() }
         findViewById<Button>(R.id.btnSearch).setOnClickListener { search() }
@@ -459,6 +470,66 @@ class MainActivity : AppCompatActivity() {
         } else {
             startService()
         }
+    }
+
+    // ───────────────────────── חזרה למיקום האמיתי ─────────────────────────
+
+    /** עוצר את הדימוי (המערכת חוזרת ל-GPS האמיתי), ממקם את הסיכה והמפה במיקום האמיתי. */
+    private fun resetToRealLocation() {
+        if (!hasLocationPerm()) {
+            pendingAction = { resetToRealLocation() }
+            permLauncher.launch(requiredPermissions())
+            return
+        }
+        Toast.makeText(this, R.string.real_loc_wait, Toast.LENGTH_SHORT).show()
+        routeJob?.cancel()
+        routeLine.setPoints(emptyList())
+        MockState.locked.value = false
+        lifecycleScope.launch {
+            if (MockState.running.value) {
+                stopService(Intent(this@MainActivity, MockLocationService::class.java))
+                withTimeoutOrNull(3000) { while (MockState.running.value) delay(100) }
+                delay(800) // זמן למערכת לחזור לספקי המיקום האמיתיים
+            }
+            val real = realLocation()
+            if (real == null) {
+                Toast.makeText(this@MainActivity, R.string.real_loc_fail, Toast.LENGTH_LONG).show()
+            } else {
+                goTo(real)
+            }
+        }
+    }
+
+    /** מיקום אמיתי חד-פעמי מהרשת או מה-GPS (בלי מיקום מדומה). */
+    @SuppressLint("MissingPermission")
+    private suspend fun realLocation(): GeoPoint? {
+        val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        for (prov in listOf(LocationManager.NETWORK_PROVIDER, LocationManager.GPS_PROVIDER)) {
+            if (!lm.isProviderEnabled(prov)) continue
+            val loc = withTimeoutOrNull(10_000) {
+                suspendCancellableCoroutine<Location?> { cont ->
+                    if (Build.VERSION.SDK_INT >= 30) {
+                        val cs = CancellationSignal()
+                        cont.invokeOnCancellation { cs.cancel() }
+                        lm.getCurrentLocation(prov, cs, ContextCompat.getMainExecutor(this)) { l ->
+                            if (cont.isActive) cont.resume(l)
+                        }
+                    } else {
+                        val listener = object : LocationListener {
+                            override fun onLocationChanged(l: Location) {
+                                lm.removeUpdates(this)
+                                if (cont.isActive) cont.resume(l)
+                            }
+                        }
+                        @Suppress("DEPRECATION")
+                        lm.requestSingleUpdate(prov, listener, Looper.getMainLooper())
+                        cont.invokeOnCancellation { lm.removeUpdates(listener) }
+                    }
+                }
+            }
+            if (loc != null) return GeoPoint(loc.latitude, loc.longitude)
+        }
+        return null
     }
 
     private fun toggle() {
